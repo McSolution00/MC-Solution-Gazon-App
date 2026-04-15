@@ -3,15 +3,14 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>MC Solution Gazon - Total Control</title>
+    <title>MC Solution Gazon - Estimator</title>
     <style>
         body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Arial, sans-serif; background:#f0f2f5; padding:15px; color: #1a1a1b; }
         .container { background:white; padding:20px; border-radius:15px; margin-bottom:15px; box-shadow: 0 4px 12px rgba(0,0,0,0.1); }
-        h2, h3 { color: #2e7d32; margin-top: 0; text-align: center; }
+        h3 { color: #2e7d32; margin-top: 0; text-align: center; }
         label { font-weight: bold; display: block; margin-top: 15px; font-size: 14px; color: #444; }
         input, select { width:100%; padding:14px; margin:8px 0; border: 1px solid #ccc; border-radius: 10px; box-sizing: border-box; font-size: 16px; background: #fff; }
         
-        /* Complexity Colors */
         #complexity { font-weight: bold; }
         .level-1 { border-left: 10px solid #4caf50 !important; }
         .level-2 { border-left: 10px solid #fbc02d !important; }
@@ -19,22 +18,23 @@
         .level-4 { border-left: 10px solid #d32f2f !important; }
 
         button { width:100%; padding:16px; margin-top:12px; background:#2e7d32; color:white; border:none; border-radius:12px; cursor: pointer; font-weight: bold; font-size: 16px; }
-        .calc-btn { background: #1b5e20; box-shadow: 0 4px 0 #0d3211; }
-        .calc-btn:active { transform: translateY(2px); box-shadow: none; }
+        .calc-btn { background: #1b5e20; }
+        .share-btn { background: #1565c0; margin-top: 8px; }
         .result { background:#e8f5e9; padding:15px; border-radius:12px; border-left: 6px solid #2e7d32; margin-top: 15px; font-size: 15px; }
         .stats-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
         button.secondary { background: #546e7a; }
-        button.export { background: #0277bd; }
-        .promo-label { color: #c62828; font-size: 0.85em; }
     </style>
 </head>
 <body>
 
 <div class="container">
-    <h3>Contract Manager</h3>
+    <h3>Contract Estimator</h3>
     
     <label>Client Name</label>
-    <input id="client" type="text" placeholder="e.g. Jean Tremblay">
+    <input id="client" type="text" placeholder="Nom du client">
+
+    <label>Phone / Email</label>
+    <input id="contact" type="text" placeholder="514-000-0000 / email@me.com">
 
     <label>Lawn Size (sq. ft.)</label>
     <input id="sqft" type="number" value="2000" oninput="runLogic()">
@@ -47,51 +47,38 @@
         <option value="4">4 - Red (Extreme)</option>
     </select>
 
-    <div id="suggestion" style="color: #2e7d32; font-size: 0.9em; font-weight: bold; margin-top: 5px;">Suggested Price: $65.00</div>
+    <div id="suggestion" style="color: #2e7d32; font-size: 0.9em; font-weight: bold; margin-top: 5px;">Suggested: $65.00</div>
 
-    <label>Final Price per Visit ($)</label>
+    <label>Price per Visit ($)</label>
     <input id="price" type="number" value="65">
 
     <label>Weeks Remaining</label>
-    <input id="weeks" type="number" placeholder="Enter weeks left">
+    <input id="weeks" type="number" placeholder="Nombre de semaines">
 
-    <label>Visits per Week (Manual override)</label>
+    <label>Visits per Week</label>
     <input id="freq" type="number" value="1" step="0.1">
 
-    <label class="promo-label">Discount / Promotion (%)</label>
-    <input id="promo" type="number" value="0" placeholder="e.g. 15">
+    <label style="color:#c62828">Discount (%)</label>
+    <input id="promo" type="number" value="0">
 
-    <button class="calc-btn" onclick="calculate()">Process & Save Entry</button>
+    <button class="calc-btn" onclick="calculate()">Process Estimate</button>
+    
     <div class="result" id="output" style="display:none;"></div>
+    <button id="shareBtn" class="share-btn" style="display:none;" onclick="shareEstimate()">Share with Client</button>
 </div>
 
 <div class="container">
-    <h3>Expenses & Admin</h3>
-    <label>Expense Amount ($)</label>
-    <input id="expAmt" type="number" placeholder="0.00">
-    <label>Category</label>
-    <select id="expCat">
-        <option>Gas</option>
-        <option>Materials</option>
-        <option>Equipment Maintenance</option>
-        <option>Other</option>
-    </select>
-    <button onclick="saveExpense()">Capture Expense</button>
-</div>
-
-<div class="container">
-    <h3>Financial Tools</h3>
+    <h3>Admin Tools</h3>
     <div class="stats-grid">
-        <button class="secondary" onclick="exportData()">Backup to OneDrive</button>
-        <button class="secondary" onclick="document.getElementById('importFile').click()">Import Data</button>
+        <button class="secondary" onclick="exportData()">Backup</button>
+        <button class="secondary" onclick="exportCSV()">CSV Export</button>
     </div>
-    <input type="file" id="importFile" style="display:none" onchange="importData(event)">
-    <button class="export" onclick="exportCSV()">Download Accountant CSV</button>
     <button style="background:#c62828" onclick="showStats()">Year-End Summary</button>
 </div>
 
 <script>
-let db = JSON.parse(localStorage.getItem("mc_data_v3") || '{"sales":[], "expenses":[]}');
+let db = JSON.parse(localStorage.getItem("mc_data_v4") || '{"sales":[], "expenses":[]}');
+let currentSummary = "";
 
 function updateColor() {
     let select = document.getElementById("complexity");
@@ -101,104 +88,26 @@ function updateColor() {
 function runLogic() {
     let sqft = +document.getElementById("sqft").value;
     let complexity = +document.getElementById("complexity").value;
-    
-    // Logic: Baseline $65 for 2000sqft, then prorated
     let basePrice = 65;
-    if (sqft > 2000) {
-        basePrice += (sqft - 2000) * 0.0325;
-    }
-
+    if (sqft > 2000) basePrice += (sqft - 2000) * 0.0325;
     let multipliers = { 1: 1.0, 2: 1.15, 3: 1.30, 4: 1.50 };
     let suggested = basePrice * multipliers[complexity];
-
     document.getElementById("suggestion").innerText = "Suggested: $" + suggested.toFixed(2);
-    // Auto-update price field, but keep it editable
     document.getElementById("price").value = suggested.toFixed(2);
 }
 
 function calculate(){
     let client = document.getElementById("client").value || "Client";
+    let contact = document.getElementById("contact").value || "";
     let price = +document.getElementById("price").value;
     let weeks = +document.getElementById("weeks").value;
     let freq = +document.getElementById("freq").value;
     let promo = +document.getElementById("promo").value;
 
-    if(!weeks) return alert("Please specify weeks remaining.");
+    if(!weeks) return alert("Please enter weeks.");
 
     let visits = weeks * freq;
-    let subtotalBeforePromo = price * visits;
-    
-    // Apply Discount
-    let discountAmount = subtotalBeforePromo * (promo / 100);
-    let subtotal = subtotalBeforePromo - discountAmount;
-
-    // Quebec Taxes
+    let subtotalBefore = price * visits;
+    let discount = subtotalBefore * (promo / 100);
+    let subtotal = subtotalBefore - discount;
     let tps = subtotal * 0.05;
-    let tvq = subtotal * 0.09975;
-    let total = subtotal + tps + tvq;
-
-    db.sales.push({ 
-        date: new Date().toLocaleDateString(), 
-        client, subtotal, tps, tvq, total, promo: promo + "%" 
-    });
-    localStorage.setItem("mc_data_v3", JSON.stringify(db));
-
-    let out = document.getElementById("output");
-    out.style.display = "block";
-    out.innerHTML = `
-        <strong>Account: ${client}</strong><br>
-        Visits: ${visits.toFixed(1)} @ $${price}/ea<br>
-        ${promo > 0 ? `<span style="color:red">Discount (${promo}%): -$${discountAmount.toFixed(2)}</span><br>` : ''}
-        Subtotal: $${subtotal.toFixed(2)}<br>
-        TPS: $${tps.toFixed(2)}<br>
-        TVQ: $${tvq.toFixed(2)}<br><hr>
-        <strong>Total to Bill: $${total.toFixed(2)}</strong>
-    `;
-}
-
-function saveExpense() {
-    let amount = +document.getElementById("expAmt").value;
-    let category = document.getElementById("expCat").value;
-    if(!amount) return alert("Enter amount");
-    db.expenses.push({ date: new Date().toLocaleDateString(), amount, category });
-    localStorage.setItem("mc_data_v3", JSON.stringify(db));
-    alert("Expense Logged!");
-}
-
-function exportCSV() {
-    let rows = [["Date", "Type", "Details", "Subtotal", "TPS", "TVQ", "Total", "PromoUsed"]];
-    db.sales.forEach(s => rows.push([s.date, "Sale", s.client, s.subtotal.toFixed(2), s.tps.toFixed(2), s.tvq.toFixed(2), s.total.toFixed(2), s.promo]));
-    db.expenses.forEach(e => rows.push([e.date, "Expense", e.category, e.amount.toFixed(2), "0", "0", e.amount.toFixed(2), "N/A"]));
-    let csv = "data:text/csv;charset=utf-8," + rows.map(r => r.join(",")).join("\n");
-    let link = document.createElement("a");
-    link.href = encodeURI(csv);
-    link.download = `MC_Bookkeeping_Export.csv`;
-    link.click();
-}
-
-function showStats() {
-    let rev = db.sales.reduce((a, b) => a + b.total, 0);
-    let exp = db.expenses.reduce((a, b) => a + b.amount, 0);
-    alert(`MC SOLUTION SUMMARY\n\nTotal Sales: $${rev.toFixed(2)}\nTotal Expenses: $${exp.toFixed(2)}\n\nNet Profit: $${(rev - exp).toFixed(2)}`);
-}
-
-function exportData() {
-    const dataStr = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify(db));
-    const link = document.createElement('a');
-    link.href = dataStr;
-    link.download = "mc_backup_v3.json";
-    link.click();
-}
-
-function importData(event) {
-    const reader = new FileReader();
-    reader.onload = (e) => { 
-        db = JSON.parse(e.target.result); 
-        localStorage.setItem("mc_data_v3", JSON.stringify(db)); 
-        alert("Success: Database Updated!"); 
-    };
-    reader.readAsText(event.target.files[0]);
-}
-</script>
-</body>
-</html>
