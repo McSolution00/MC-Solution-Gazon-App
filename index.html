@@ -2,66 +2,55 @@
 <html lang="fr">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>MC Solution Gazon - Business Suite</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>MC Solution Gazon - Master</title>
     <style>
-        body { font-family: -apple-system, system-ui, sans-serif; background:#f0f2f5; padding:15px; color: #1a1a1b; }
-        .container { background:white; padding:20px; border-radius:15px; margin-bottom:15px; box-shadow: 0 4px 12px rgba(0,0,0,0.1); }
-        h3 { color: #2e7d32; margin-top: 0; text-align: center; border-bottom: 2px solid #e8f5e9; padding-bottom: 10px; }
-        label { font-weight: bold; display: block; margin-top: 15px; font-size: 14px; color: #444; }
-        input, select { width:100%; padding:14px; margin:8px 0; border: 1px solid #ccc; border-radius: 10px; box-sizing: border-box; font-size: 16px; background: #fff; -webkit-appearance: none; }
+        body { font-family: -apple-system, sans-serif; background:#f0f2f5; padding:10px; color: #1a1a1b; margin:0; }
+        .container { background:white; padding:15px; border-radius:12px; margin-bottom:15px; box-shadow: 0 2px 8px rgba(0,0,0,0.1); }
+        h3 { color: #2e7d32; margin-top: 0; text-align: center; font-size: 20px; border-bottom: 2px solid #e8f5e9; padding-bottom: 10px; }
+        label { font-weight: bold; display: block; margin-top: 12px; font-size: 12px; color: #555; text-transform: uppercase; }
+        input, select { width:100%; padding:14px; margin:5px 0; border: 1px solid #ddd; border-radius: 10px; box-sizing: border-box; font-size: 16px; background: #fff; -webkit-appearance: none; }
         
         .level-1 { border-left: 10px solid #4caf50 !important; }
         .level-2 { border-left: 10px solid #fbc02d !important; }
         .level-3 { border-left: 10px solid #f57c00 !important; }
         .level-4 { border-left: 10px solid #d32f2f !important; }
 
-        button { width:100%; padding:18px; margin-top:10px; background:#2e7d32; color:white; border:none; border-radius:12px; cursor: pointer; font-weight: bold; font-size: 16px; -webkit-appearance: none; }
+        button { width:100%; padding:16px; margin-top:10px; background:#2e7d32; color:white; border:none; border-radius:12px; cursor: pointer; font-weight: bold; font-size: 16px; -webkit-appearance: none; }
         .calc-btn { background: #1b5e20; border-bottom: 4px solid #0a2e10; }
         .share-btn { background: #0277bd; display: none; }
-        .result { background:#e8f5e9; padding:15px; border-radius:12px; border: 1px solid #c8e6c9; margin-top: 15px; font-size: 16px; white-space: pre-wrap; display: none; }
-        .stats-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-top: 10px; }
-        button.secondary { background: #546e7a; font-size: 13px; padding: 12px; }
-        button.accountant { background: #ef6c00; }
-        #preview { margin-top: 10px; text-align: center; }
-        .preview-img { width: 100%; border-radius: 10px; margin-top: 5px; }
+        .expense-btn { background: #7b1fa2; }
+        .result { background:#e8f5e9; padding:15px; border-radius:12px; border: 1px solid #c8e6c9; margin-top: 15px; font-size: 15px; white-space: pre-wrap; display: none; }
+        
+        .admin-grid { display: flex; gap: 10px; margin-top: 10px; }
+        .admin-grid button { flex: 1; margin-top: 0; font-size: 13px; padding: 12px 5px; background: #546e7a; }
     </style>
 </head>
 <body>
 
 <div class="container">
-    <h3>Estimator & Contracts</h3>
+    <h3>Estimator & Sales</h3>
     
-    <label>Client Name (Optional)</label>
-    <input id="client" type="text" placeholder="e.g. Jean Tremblay">
+    <label>Client Details (Optional)</label>
+    <input id="client" type="text" placeholder="Client Name">
+    <input id="contact" type="text" placeholder="Phone/Email">
 
-    <label>Contact Info (Optional)</label>
-    <input id="contact" type="text" placeholder="Phone or Email">
-
-    <label>Lawn Size (sq. ft.)</label>
-    <input id="sqft" type="number" value="2000" oninput="runLogic()">
-
-    <label>Complexity</label>
+    <label>Lawn Specs</label>
+    <input id="sqft" type="number" placeholder="Lawn Sq. Ft. (e.g. 10000)" oninput="runLogic()">
     <select id="complexity" onchange="updateColor(); runLogic();" class="level-1">
-        <option value="1">1 - Normal (Green)</option>
-        <option value="2">2 - Medium (Yellow)</option>
-        <option value="3">3 - Orange (Difficult)</option>
-        <option value="4">4 - Red (Extreme)</option>
+        <option value="1">Lvl 1 - Green (Normal)</option>
+        <option value="2">Lvl 2 - Yellow (Medium)</option>
+        <option value="3">Lvl 3 - Orange (Difficult)</option>
+        <option value="4">Lvl 4 - Red (Extreme)</option>
     </select>
 
-    <div id="suggestion" style="color: #2e7d32; font-size: 14px; font-weight: bold; margin-top: 5px;">Suggested: $65.00</div>
+    <div id="suggestion" style="color: #2e7d32; font-size: 13px; font-weight: bold; margin: 5px 0;">Suggested: $65.00</div>
 
-    <label>Price per Visit ($)</label>
-    <input id="price" type="number" value="65">
-
-    <label>Weeks Remaining</label>
-    <input id="weeks" type="number" value="22">
-
-    <label>Visits per Week</label>
-    <input id="freq" type="number" value="1" step="0.1">
-
-    <label style="color:#c62828">Discount (%)</label>
-    <input id="promo" type="number" value="0">
+    <label>Manual Adjustments</label>
+    <input id="price" type="number" placeholder="Price per Visit">
+    <input id="weeks" type="number" placeholder="Weeks Remaining (Default 22)">
+    <input id="freq" type="number" step="0.1" placeholder="Visits/Week (1)">
+    <input id="promo" type="number" placeholder="Discount %">
 
     <button class="calc-btn" onclick="calculate()">Process & Log Sale</button>
     
@@ -70,36 +59,34 @@
 </div>
 
 <div class="container">
-    <h3>Expense Tracker</h3>
-    <label>Amount ($)</label>
-    <input id="expAmt" type="number" placeholder="0.00">
-    <label>Category</label>
+    <h3>Expenses & Bookkeeping</h3>
+    <input id="expAmt" type="number" placeholder="Amount $">
     <select id="expCat">
         <option>Gas</option>
-        <option>Materials (Seed/Fertilizer)</option>
-        <option>Equipment Maintenance</option>
+        <option>Materials / Fertilizer</option>
+        <option>Maintenance / Parts</option>
         <option>Other</option>
     </select>
-    <label>Receipt Photo</label>
+    <label>Receipt Camera</label>
     <input id="receipt" type="file" accept="image/*" capture="environment">
-    <button onclick="saveExpense()">Save Expense</button>
-    <div id="preview"></div>
+    <button class="expense-btn" onclick="saveExpense()">Save Expense</button>
 </div>
 
 <div class="container">
-    <h3>Business & Accounting</h3>
-    <div class="stats-grid">
-        <button class="secondary" onclick="exportData()">Backup to OneDrive</button>
-        <button class="secondary" onclick="document.getElementById('importFile').click()">Import Data</button>
+    <h3>Business Admin</h3>
+    <button style="background:#1565c0" onclick="exportCSV()">Download Accountant CSV</button>
+    
+    <div class="admin-grid">
+        <button onclick="exportData()">Backup</button>
+        <button onclick="document.getElementById('importFile').click()">Import</button>
     </div>
     <input type="file" id="importFile" style="display:none" onchange="importData(event)">
     
-    <button class="accountant" onclick="exportCSV()">Export Accountant CSV</button>
-    <button style="background:#c62828" onclick="showStats()">Year-End Summary</button>
+    <button style="background:#c62828" onclick="showStats()">Yearly Summary</button>
 </div>
 
 <script>
-let db = JSON.parse(localStorage.getItem("mc_solution_v6") || '{"sales":[], "expenses":[]}');
+let db = JSON.parse(localStorage.getItem("mc_v9_master") || '{"sales":[], "expenses":[]}');
 let summaryText = "";
 
 function updateColor() {
@@ -108,12 +95,21 @@ function updateColor() {
 }
 
 function runLogic() {
-    let sqft = +document.getElementById("sqft").value || 0;
-    let complexity = +document.getElementById("complexity").value || 1;
-    let basePrice = 65;
-    if (sqft > 2000) basePrice += (sqft - 2000) * 0.0325;
+    let sqft = parseFloat(document.getElementById("sqft").value) || 2000;
+    let complexity = parseInt(document.getElementById("complexity").value) || 1;
+    
+    // UNCAPPED TIERED PRICING
+    let basePrice = 65; // Cover setup/travel for first 2000
+    let incrementalRate = 0.015; // Mowing rate for every sqft thereafter
+    
+    let priceCalculated = basePrice;
+    if (sqft > 2000) {
+        priceCalculated += (sqft - 2000) * incrementalRate;
+    }
+
     let multipliers = { 1: 1.0, 2: 1.15, 3: 1.30, 4: 1.50 };
-    let suggested = basePrice * multipliers[complexity];
+    let suggested = priceCalculated * multipliers[complexity];
+    
     document.getElementById("suggestion").innerText = "Suggested: $" + suggested.toFixed(2);
     document.getElementById("price").value = suggested.toFixed(2);
 }
@@ -121,33 +117,29 @@ function runLogic() {
 function calculate(){
     const client = document.getElementById("client").value || "Client";
     const contact = document.getElementById("contact").value || "N/A";
-    const price = parseFloat(document.getElementById("price").value) || 0;
-    const weeks = parseFloat(document.getElementById("weeks").value) || 0;
-    const freq = parseFloat(document.getElementById("freq").value) || 0;
+    const price = parseFloat(document.getElementById("price").value) || 65;
+    const weeks = parseFloat(document.getElementById("weeks").value) || 22;
+    const freq = parseFloat(document.getElementById("freq").value) || 1;
     const promo = parseFloat(document.getElementById("promo").value) || 0;
 
     let visits = weeks * freq;
     let subtotalRaw = price * visits;
     let discount = subtotalRaw * (promo / 100);
     let subtotal = subtotalRaw - discount;
-    
     let tps = subtotal * 0.05;
     let tvq = subtotal * 0.09975;
     let total = subtotal + tps + tvq;
 
-    summaryText = `MC Solution Gazon - Estimate\n` +
-        `Client: ${client}\n` +
+    summaryText = `MC Solution Gazon\nEstimate for: ${client}\nContact: ${contact}\n---\n` +
         `Visits: ${visits.toFixed(1)} @ $${price.toFixed(2)}\n` +
-        (promo > 0 ? `Discount: -${promo}%\n` : "") +
+        (promo > 0 ? `Promo: -${promo}%\n` : "") +
         `Subtotal: $${subtotal.toFixed(2)}\n` +
-        `TPS/TVQ: $${(tps + tvq).toFixed(2)}\n` +
+        `TPS (5%): $${tps.toFixed(2)}\n` +
+        `TVQ (9.975%): $${tvq.toFixed(2)}\n` +
         `TOTAL: $${total.toFixed(2)}`;
 
-    db.sales.push({ 
-        date: new Date().toLocaleDateString(), 
-        client, contact, subtotal, tps, tvq, total: total.toFixed(2) 
-    });
-    localStorage.setItem("mc_solution_v6", JSON.stringify(db));
+    db.sales.push({ date: new Date().toLocaleDateString(), client, total: total.toFixed(2), tps: tps.toFixed(2), tvq: tvq.toFixed(2), subtotal: subtotal.toFixed(2) });
+    localStorage.setItem("mc_v9_master", JSON.stringify(db));
 
     const out = document.getElementById("output");
     out.innerText = summaryText;
@@ -158,65 +150,45 @@ function calculate(){
 function saveExpense() {
     let amount = parseFloat(document.getElementById("expAmt").value) || 0;
     let category = document.getElementById("expCat").value;
-    let file = document.getElementById("receipt").files[0];
-
-    let entry = { date: new Date().toLocaleDateString(), amount, category };
-
-    if(file) {
-        let reader = new FileReader();
-        reader.onload = function(){
-            entry.image = reader.result; // Saves photo in database
-            db.expenses.push(entry);
-            localStorage.setItem("mc_solution_v6", JSON.stringify(db));
-            document.getElementById("preview").innerHTML = `<img src="${reader.result}" class="preview-img"><br>Saved $${amount}`;
-        };
-        reader.readAsDataURL(file);
-    } else {
-        db.expenses.push(entry);
-        localStorage.setItem("mc_solution_v6", JSON.stringify(db));
-        alert("Expense saved without photo.");
-    }
-}
-
-async function shareEstimate() {
-    if (navigator.share) {
-        try { await navigator.share({ title: 'Estimate', text: summaryText }); } catch (err) {}
-    } else { alert("Please copy the result box manually."); }
+    if(amount <= 0) return alert("Please enter an amount.");
+    db.expenses.push({ date: new Date().toLocaleDateString(), amount: amount.toFixed(2), category });
+    localStorage.setItem("mc_v9_master", JSON.stringify(db));
+    alert("Expense saved!");
 }
 
 function exportCSV() {
     let rows = [["Date", "Type", "Details", "Subtotal", "TPS", "TVQ", "Total"]];
-    db.sales.forEach(s => rows.push([s.date, "Sale", s.client, s.subtotal.toFixed(2), s.tps.toFixed(2), s.tvq.toFixed(2), s.total]));
-    db.expenses.forEach(e => rows.push([e.date, "Expense", e.category, e.amount.toFixed(2), "0", "0", e.amount.toFixed(2)]));
-    let csv = "data:text/csv;charset=utf-8," + rows.map(r => r.join(",")).join("\n");
+    db.sales.forEach(s => rows.push([s.date, "Sale", s.client, s.subtotal, s.tps, s.tvq, s.total]));
+    db.expenses.forEach(e => rows.push([e.date, "Expense", e.category, e.amount, "0", "0", e.amount]));
+    let csvContent = "data:text/csv;charset=utf-8," + rows.map(r => r.join(",")).join("\n");
     let link = document.createElement("a");
-    link.href = encodeURI(csv);
-    link.download = `MC_Accounting_Export.csv`;
+    link.href = encodeURI(csvContent);
+    link.download = "MC_Full_Accounting.csv";
     link.click();
 }
 
 function showStats() {
     let rev = db.sales.reduce((a, b) => a + parseFloat(b.total), 0);
-    let exp = db.expenses.reduce((a, b) => a + b.amount, 0);
-    alert(`YEAR-END SUMMARY\n\nTotal Sales (Inc. Tax): $${rev.toFixed(2)}\nTotal Expenses: $${exp.toFixed(2)}\n\nNet Profit: $${(rev - exp).toFixed(2)}`);
+    let exp = db.expenses.reduce((a, b) => a + parseFloat(b.amount), 0);
+    alert(`Revenue: $${rev.toFixed(2)}\nExpenses: $${exp.toFixed(2)}\nNet Profit: $${(rev - exp).toFixed(2)}`);
 }
 
 function exportData() {
     const dataStr = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify(db));
     const link = document.createElement('a');
     link.href = dataStr;
-    link.download = "mc_solution_backup.json";
+    link.download = "mc_backup.json";
     link.click();
 }
 
 function importData(event) {
     const reader = new FileReader();
-    reader.onload = (e) => { 
-        db = JSON.parse(e.target.result); 
-        localStorage.setItem("mc_solution_v6", JSON.stringify(db)); 
-        alert("Cloud Sync Successful!"); 
-    };
+    reader.onload = (e) => { db = JSON.parse(e.target.result); localStorage.setItem("mc_v9_master", JSON.stringify(db)); alert("Sync Complete!"); };
     reader.readAsText(event.target.files[0]);
+}
+
+async function shareEstimate() {
+    if (navigator.share) await navigator.share({ title: 'Estimate', text: summaryText });
 }
 </script>
 </body>
