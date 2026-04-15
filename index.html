@@ -1,0 +1,181 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>MC Solution Gazon - Business System</title>
+    <style>
+        body { font-family: 'Segoe UI', Arial; background:#f4f6f8; padding:15px; color: #333; }
+        .container { background:white; padding:15px; border-radius:10px; margin-bottom:15px; box-shadow: 0 2px 5px rgba(0,0,0,0.1); }
+        h2, h3 { color: #2e7d32; margin-top: 0; }
+        label { font-weight: bold; display: block; margin-top: 10px; }
+        input, select { width:100%; padding:10px; margin:5px 0 10px 0; border: 1px solid #ccc; border-radius: 5px; box-sizing: border-box; }
+        button { width:100%; padding:12px; margin-top:10px; background:#2e7d32; color:white; border:none; border-radius:8px; cursor: pointer; font-weight: bold; }
+        button.secondary { background: #546e7a; }
+        button.export { background: #1565c0; }
+        .result { background:#e8f5e9; padding:15px; border-radius:10px; border-left: 5px solid #2e7d32; }
+        img.preview { width:100%; max-width: 200px; margin-top:10px; border-radius: 5px; }
+        .stats-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-top: 10px; }
+    </style>
+</head>
+<body>
+
+<h2>MC Solution Gazon</h2>
+
+<div class="container">
+    <h3>Calculator (Quebec Tax)</h3>
+    <label>Client Name</label>
+    <input id="client" placeholder="e.g. Jean Tremblay">
+    <label>Price per Visit ($)</label>
+    <input id="price" type="number" value="65">
+    <label>Total Weeks</label>
+    <input id="weeks" type="number" value="22">
+    <label>Frequency</label>
+    <select id="frequency">
+        <option value="1">Weekly (22 visits)</option>
+        <option value="0.5">Bi-Weekly (11 visits)</option>
+    </select>
+    <button onclick="calculate()">Calculate & Log Sale</button>
+</div>
+
+<div class="result" id="output" style="display:none;"></div>
+
+<div class="container">
+    <h3>Add Expense</h3>
+    <label>Amount ($)</label>
+    <input id="expenseAmount" type="number" placeholder="0.00">
+    <label>Category</label>
+    <select id="category">
+        <option>Gas</option>
+        <option>Materials (Fertilizer/Seed)</option>
+        <option>Equipment Maintenance</option>
+        <option>Insurance/Admin</option>
+        <option>Other</option>
+    </select>
+    <label>Receipt Photo</label>
+    <input type="file" accept="image/*" capture="environment" id="receipt">
+    <button onclick="saveExpense()">Save Expense</button>
+    <div id="preview"></div>
+</div>
+
+<div class="container">
+    <h3>Data & OneDrive Sync</h3>
+    <p style="font-size: 0.8em; color: #666;">To sync devices: Export Data -> Save to OneDrive. On other device: Choose File -> Import.</p>
+    <div class="stats-grid">
+        <button class="secondary" onclick="exportData()">Export for OneDrive</button>
+        <input type="file" id="importFile" style="display:none" onchange="importData(event)">
+        <button class="secondary" onclick="document.getElementById('importFile').click()">Import Data</button>
+    </div>
+    <button class="export" onclick="exportCSV()">Export Accountant CSV</button>
+    <button style="background:#c62828" onclick="showStats()">Year-End Summary</button>
+</div>
+
+<script>
+// Data structures
+let db = JSON.parse(localStorage.getItem("mc_solution_data") || '{"sales":[], "expenses":[]}');
+
+function saveDB() {
+    localStorage.setItem("mc_solution_data", JSON.stringify(db));
+}
+
+function calculate(){
+    let client = document.getElementById("client").value || "Generic Client";
+    let price = +document.getElementById("price").value;
+    let weeks = +document.getElementById("weeks").value;
+    let freq = +document.getElementById("frequency").value;
+
+    let visits = weeks * freq;
+    let subtotal = price * visits;
+    let tps = subtotal * 0.05;
+    let tvq = subtotal * 0.09975;
+    let total = subtotal + tps + tvq;
+
+    // Log to bookkeeping
+    db.sales.push({ date: new Date().toLocaleDateString(), client, subtotal, tps, tvq, total });
+    saveDB();
+
+    let out = document.getElementById("output");
+    out.style.display = "block";
+    out.innerHTML = `
+        <strong>Invoice Estimate for ${client}</strong><br>
+        Subtotal: $${subtotal.toFixed(2)}<br>
+        TPS (5%): $${tps.toFixed(2)}<br>
+        TVQ (9.975%): $${tvq.toFixed(2)}<br>
+        <strong>Total: $${total.toFixed(2)}</strong>
+    `;
+}
+
+function saveExpense(){
+    let amount = +document.getElementById("expenseAmount").value;
+    let category = document.getElementById("category").value;
+    let file = document.getElementById("receipt").files[0];
+
+    if(!amount) return alert("Enter an amount");
+
+    let entry = { date: new Date().toLocaleDateString(), amount, category };
+
+    if(file) {
+        let reader = new FileReader();
+        reader.onload = function(){
+            entry.image = reader.result;
+            db.expenses.push(entry);
+            saveDB();
+            document.getElementById("preview").innerHTML = `Saved $${amount} in ${category}`;
+        };
+        reader.readAsDataURL(file);
+    } else {
+        db.expenses.push(entry);
+        saveDB();
+        alert("Expense saved without image.");
+    }
+}
+
+function exportCSV() {
+    let rows = [["Date", "Type", "Client/Category", "Subtotal/Amount", "TPS", "TVQ", "Total"]];
+    
+    db.sales.forEach(s => rows.push([s.date, "Sale", s.client, s.subtotal, s.tps, s.tvq, s.total]));
+    db.expenses.forEach(e => rows.push([e.date, "Expense", e.category, e.amount, 0, 0, e.amount]));
+
+    let csvContent = "data:text/csv;charset=utf-8," + rows.map(e => e.join(",")).join("\n");
+    let encodedUri = encodeURI(csvContent);
+    let link = document.createElement("a");
+    link.setAttribute("href", encodedUri);
+    link.setAttribute("download", `MC_Solution_Tax_Report_${new Date().getFullYear()}.csv`);
+    document.body.appendChild(link);
+    link.click();
+}
+
+function showStats() {
+    let rev = db.sales.reduce((sum, s) => sum + s.total, 0);
+    let tps = db.sales.reduce((sum, s) => sum + s.tps, 0);
+    let tvq = db.sales.reduce((sum, s) => sum + s.tvq, 0);
+    let exp = db.expenses.reduce((sum, e) => sum + e.amount, 0);
+
+    alert(`YEAR-END SUMMARY\n\nTotal Revenue: $${rev.toFixed(2)}\nTPS Collected: $${tps.toFixed(2)}\nTVQ Collected: $${tvq.toFixed(2)}\nTotal Expenses: $${exp.toFixed(2)}\n\nNet Profit: $${(rev - exp).toFixed(2)}`);
+}
+
+function exportData() {
+    const dataStr = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify(db));
+    const downloadAnchorNode = document.createElement('a');
+    downloadAnchorNode.setAttribute("href", dataStr);
+    downloadAnchorNode.setAttribute("download", "mc_solution_backup.json");
+    document.body.appendChild(downloadAnchorNode);
+    downloadAnchorNode.click();
+    downloadAnchorNode.remove();
+}
+
+function importData(event) {
+    const file = event.target.files[0];
+    const reader = new FileReader();
+    reader.onload = function(e) {
+        db = JSON.parse(e.target.result);
+        saveDB();
+        alert("Data Sync Complete!");
+    };
+    reader.readAsText(file);
+}
+</script>
+
+</body>
+</html>
+add app code
